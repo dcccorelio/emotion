@@ -1,5 +1,5 @@
 {
-  "name": "babel-plugin-emotion",
+  "name": "@mediahuis/babel-plugin-emotion",
   "version": "9.0.1",
   "description": "A recommended babel preprocessing plugin for emotion, The Next Generation of CSS-in-JS.",
   "main": "lib/index.js",
