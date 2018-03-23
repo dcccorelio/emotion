@@ -3,6 +3,11 @@ import nodePath from 'path'
 import { hashArray } from './index'
 import type { BabelPath, EmotionBabelPluginPass } from './index'
 import type { Types, Identifier } from 'babel-flow-types'
+import generate from "babel-generator";
+import {
+  instantiateModule,
+  clearLocalModulesFromCache,
+} from './module-system';
 
 function getDeclaratorName(path: BabelPath, t: Types) {
   // $FlowFixMe
@@ -167,3 +172,44 @@ export const minify = (code: string) =>
 
     return str + fragment
   }, '')
+
+  export const compileCode = (code: string, filename: string) => {
+    clearLocalModulesFromCache()
+
+    return instantiateModule(
+      code,
+      filename
+    );
+  }
+
+  function getSelfBinding(nodePath: BabelPath) {
+    return nodePath.scope.getBinding(nodePath.node.name);
+  }
+
+  export const resolveSource = (binding: BabelPath, t: Types) => {
+    let code: string;
+    //const binding = getSelfBinding(path);
+
+    switch (binding.kind) {
+      case 'module':
+        code = generate(binding.path.parentPath.node).code
+        break;
+      case 'const':
+      case 'let':
+      case 'var':
+       code =
+        binding.path.getSource().length === 0
+          ? null
+          : `${binding.kind} ${binding.path.getSource()}`;
+        break;
+      default:
+        code = binding.path.getSource();
+        break;
+    }
+
+    if (!binding.path.node.loc || !code) {
+      return null;
+    }
+
+    return code;
+  }
