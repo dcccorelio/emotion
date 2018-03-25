@@ -9,7 +9,9 @@ import {
   getIdentifierName,
   createRawStringFromTemplateLiteral,
   minify,
-  getLabel
+  getLabel,
+  compileCode,
+  resolveSource
 } from './babel-utils'
 import type {
   Node,
@@ -101,6 +103,40 @@ export function replaceCssWithCallExpression(
   localIdentName?: string
 ) {
   try {
+    // fix interpolation
+    if (state.extractStatic && path.node.quasi.expressions.length) {
+      let output = []
+      path.node.quasi.expressions.forEach(expr => {
+        const source = resolveSource(
+          path.scope.getBinding(expr.name || (expr.callee && expr.callee.name)),
+          t
+        )
+        output.push(source)
+      })
+
+      output.push(
+        path.getSource().replace(path.node.tag.name, 'module.exports = ')
+      )
+      const { exports: compiledCode } = compileCode(
+        output.join('\n'),
+        nodePath.relative(process.cwd(), state.file.opts.filename)
+      )
+      path.replaceWith(
+        t.taggedTemplateExpression(
+          t.identifier(path.node.tag.name),
+          t.templateLiteral(
+            [
+              t.templateElement({
+                cooked: compiledCode,
+                raw: compiledCode
+              })
+            ],
+            []
+          )
+        )
+      )
+    }
+
     let { hash, src } = createRawStringFromTemplateLiteral(path.node.quasi)
     const identifierName = getIdentifierName(path, t)
 
