@@ -114,6 +114,9 @@ export function replaceCssWithCallExpression(
         output.push(source)
       })
 
+      // remove duplications
+      output = Array.from(new Set(output))
+
       output.push(
         path.getSource().replace(path.node.tag.name, 'module.exports = ')
       )
