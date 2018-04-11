@@ -107,8 +107,12 @@ export function replaceCssWithCallExpression(
     if (state.extractStatic && path.node.quasi.expressions.length) {
       let output = []
       path.node.quasi.expressions.forEach(expr => {
+        let nodeForBinding = expr
+        if (expr.type === 'MemberExpression') {
+          nodeForBinding = expr.object
+        }
         const source = resolveSource(
-          path.scope.getBinding(expr.name || (expr.callee && expr.callee.name)),
+          path.scope.getBinding(nodeForBinding.name || (nodeForBinding.callee && nodeForBinding.callee.name)),
           t
         )
         output.push(source)
