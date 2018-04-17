@@ -100,7 +100,8 @@ export function replaceCssWithCallExpression(
   t: Types,
   staticCSSSrcCreator: (src: string, name: string) => string = src => src,
   removePath: boolean = false,
-  localIdentName?: string
+  localIdentName?: string,
+  getLocalIdent?: Function
 ) {
   try {
     // fix interpolation
@@ -160,6 +161,10 @@ export function replaceCssWithCallExpression(
       )
         .replace(new RegExp('[^a-zA-Z0-9\\-_\u00A0-\uFFFF]', 'g'), '-')
         .replace(/^((-?[0-9])|--)/, '_$1')
+    }
+
+    if (typeof getLocalIdent !== 'undefined') {
+      generatedIdentName = getLocalIdent(generatedIdentName, identifierName);
     }
 
     // backwards compatibility so we don't break anything
@@ -764,7 +769,8 @@ export default function(babel: Babel) {
               t,
               src => src,
               false,
-              state.opts.localIdentName
+              state.opts.localIdentName,
+              state.opts.getLocalIdent
             )
           } else if (path.node.tag.name === state.importedNames.keyframes) {
             replaceCssWithCallExpression(
@@ -772,7 +778,8 @@ export default function(babel: Babel) {
               path.node.tag,
               state,
               t,
-              (src, name) => `@keyframes ${name} { ${src} }`
+              (src, name) => `@keyframes ${name} { ${src} }`,
+              state.opts.getLocalIdent
             )
           } else if (path.node.tag.name === state.importedNames.injectGlobal) {
             replaceCssWithCallExpression(
@@ -782,7 +789,8 @@ export default function(babel: Babel) {
               t,
               undefined,
               true,
-              ''
+              '',
+              state.opts.getLocalIdent
             )
           }
         }
