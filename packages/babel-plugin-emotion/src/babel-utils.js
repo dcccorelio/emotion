@@ -195,6 +195,7 @@ export const resolveSource = (binding: BabelPath, t: Types) => {
       code = binding.path.getSource()
       break
   }
+  console.log(code);
 
   if (!binding.path.node.loc || !code) {
     return null
